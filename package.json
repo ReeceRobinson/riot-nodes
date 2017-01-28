@@ -1,0 +1,17 @@
+{
+  "name"         : "riot-xbee",
+  "version"      : "0.0.1",
+  "description"  : "An XBee communication node for node-red",
+  "dependencies": {
+    "xbee-rx": "2.1.0"
+  },
+  "devDependencies": {
+    "moment": "^2.10"
+  },
+  "keywords": ["XBee" ],
+  "node-red"     : {
+    "nodes": {
+      "riot-xbee": "riot/riot-xbee.js"
+    }
+  }
+}
