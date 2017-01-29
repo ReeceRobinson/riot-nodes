@@ -173,6 +173,68 @@ module.exports = function(RED) {
 
     RED.nodes.registerType("xbee-digital-in",RiotXbeeDigitalInNode);
 
+    function RiotXbeeAnalogInNode(config) {
+        RED.nodes.createNode(this,config);
+        // Configuration Nodes
+        this.serial = config.serial;
+        this.serialConfig = RED.nodes.getNode(this.serial);
+
+        if (this.serialConfig) {
+            var node = this;
+            // Store configuration values here
+            this.address = config.address;
+            this.addressMethod = config.addressMethod;
+            this.pin = config.pin;
+            this.pinState = config.pinState;
+
+            // Provide any relevant status info
+            showStatus(node, StatusEnum.DISCONNECT)
+
+            node.log(util.format("Get XBee on %s:%s", this.serialConfig.serialport, this.serialConfig.serialbaud));
+
+            node.xbee = xbeePool.get(this.serialConfig)
+            node.xbee.getLocalAddress();
+            //showStatus(node,StatusEnum.CONNECT);
+
+            // Node functions
+            showStatus(node,StatusEnum.CONNECT);
+            var valueStream = node.xbee.listenAnalogIn(this.addressMethod, this.address, this.pin);
+
+            var subscription = valueStream
+                .subscribe(function (response) {
+                    var msg = {};
+                    msg.payload = response;
+                    node.send(msg);
+
+                }, function (error) {
+                    console.log("Error during monitoring:\n", error);
+                    showStatus(node,StatusEnum.DISCONNECT);
+                }, function () {
+                    console.log("Monitoring stream ended; exiting.");
+                    showStatus(node,StatusEnum.DISCONNECT);
+                });
+
+            node.on('close', function() {
+                subscription.dispose();
+                showStatus(node,StatusEnum.DISCONNECT);
+            });
+
+        } else {
+            this.error(RED._("serial.errors.missing-conf"));
+        }
+
+        this.on("close", function(done) {
+            if (this.serialConfig) {
+                xbeePool.close(this.serialConfig.serialport,done);
+            } else {
+                done();
+            }
+        });
+    }
+
+    RED.nodes.registerType("xbee-analog-in",RiotXbeeAnalogInNode);
+
+
     var xbeePool = (function() {
         var connections = {};
         return {
@@ -273,6 +335,47 @@ module.exports = function(RED) {
                                     .throttle(1000);
 
                             },
+                            listenAnalogIn: function(addressMethod, address, pin) {
+                                RED.log.info(RED._("serial.command.digitalin",{command:pin,addressmethod:addressMethod,address:address}));
+                                var params = {
+                                    command: pin
+                                };
+                                // ToDo: It appears that destination16 is the only supported method of addressing on my hardware or there is a bug in xbee-rx/xbee-api?
+                                switch(addressMethod) {
+                                    case "destination64":
+                                        params.destination64 = hexStringToBytes(address);
+                                        break;
+                                    case "destination16":
+                                        params.destination16 = hexStringToBytes(address);
+                                        break;
+                                    case "destinationId":
+                                        params.destinationId = address;
+                                        break;
+                                    default:
+                                        RED.log.error(RED._("missing-address-method-conf",{port:serial.serialport}));
+                                }
+
+                                var ad_map = {
+                                    D0:"AD0",
+                                    D1:"AD1",
+                                    D2:"AD2",
+                                    D3:"AD3"
+                                };
+                                console.log('Analog Input subscribed to:',ad_map[pin] || "AD0");
+                                return this.xbee
+                                    .monitorIODataPackets()
+                                    // ignore any packets at program startup
+                                    .skipUntil(rx.Observable.timer(100))
+                                    // extract just the DIO3 sample (1 (released) or 0 (pressed))
+                                    .pluck("analogSamples", ad_map[pin])
+                                    // pluck results in undefined if the sample doesn't exist, so filter that out
+                                    .where(function (sample) {
+                                        return sample !== undefined;
+                                    })
+                                    // ignore multiple values that arrive within one second
+                                    .throttle(1000);
+                            },
+
                             getLocalAddress: function() {
                                 this.xbee.localCommand({
                                     // ATMY
