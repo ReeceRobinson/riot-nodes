@@ -1,0 +1,275 @@
+
+<script type="text/x-red" data-template-name="xbee-digital-out">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row node-input-serial">
+        <label for="node-input-serial"><i class="icon-bullhorn"></i> <span data-i18n="serial.label.xbeeport"></span></label>
+        <input type="text" id="node-input-serial">
+    <div class="form-row">
+        <label for="node-input-addressMethod"><i class="fa fa-tasks"></i> Addressing Method</label>
+        <select type="text" id="node-input-addressMethod" style="width:70%;">
+        <option value="destination64">64 bit</option>
+        <option value="destination16">16 Bit</option>
+        <option value="destinationId">ID</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="icon-road"></i> Address</label>
+        <input type="text" id="node-input-address" placeholder="XBee Address e.g. 0013a200408b9437, ab23, MyNodeId">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pin"><i class="icon-road"></i> Pin</label>
+        <!--<input type="text" id="node-input-pin" placeholder="XBee IO pin e.g. D4">-->
+        <select type="text" id="node-input-pin" style="width:70%;">
+        <option value="D0">D0</option>
+        <option value="D1">D1</option>
+        <option value="D2">D2</option>
+        <option value="D3">D3</option>
+        <option value="D4">D4</option>
+        <option value="D5">D5</option>
+        <option value="D6">D6</option>
+        <option value="D7">D7</option>
+        <option value="D10">D10</option>
+        <option value="D11">D11</option>
+        <option value="D12">D12</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-pinState"><i class="icon-road"></i> Pin State</label>
+        <select type="text" id="node-input-pinState" style="width:70%;">
+        <option value="4">0</option>
+        <option value="5">1</option>
+        </select>
+    </div>
+    <div class="form-tips">
+    	XBee addresses are specified as 16 or 64 bit Hex strings, e.g. 0a12 or 0013a200408b9437, or node identifier string.
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="xbee-digital-out">
+	<p>Provides an connection to an XBEE network through an XBee module connected to this computer&apos;s serial port. </p>
+	<p>XBee addresses are specified as base64 Hex strings, e.g. 0013a200408b9437. </p>
+
+</script>
+<script type="text/javascript">
+    RED.nodes.registerType('xbee-digital-out',{
+        category: 'output',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""},
+            addressMethod:{value:"", required:true},
+            address: {value:"", required:true},
+            pin: {value:"", required:true},
+            pinState: {value:"", required:true,validate:RED.validators.number()},
+            serial: {type:"xbee-port",required:true}
+        },
+        inputs:1,
+        outputs:0,
+        icon: "bridge.png",
+        align: "right",
+        label: function() {
+            var serialNode = RED.nodes.node(this.serial);
+            return this.name||(this.address?"XBee "+this.address:(serialNode?serialNode.label():"serial"));
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
+
+
+<script type="text/x-red" data-template-name="xbee-digital-in">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row node-input-serial">
+        <label for="node-input-serial"><i class="icon-bullhorn"></i> <span data-i18n="serial.label.xbeeport"></span></label>
+        <input type="text" id="node-input-serial">
+    </div>
+    <div class="form-row">
+        <label for="node-input-addressMethod"><i class="fa fa-tasks"></i> Addressing Method</label>
+        <select type="text" id="node-input-addressMethod" style="width:70%;">
+        <option value="destination64">64 bit</option>
+        <option value="destination16">16 Bit</option>
+        <option value="destinationId">ID</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="icon-road"></i> Address</label>
+        <input type="text" id="node-input-address" placeholder="XBee Address e.g. 0013a200408b9437, ab23, MyNodeId">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pin"><i class="icon-road"></i> Pin</label>
+        <!--<input type="text" id="node-input-pin" placeholder="XBee IO pin e.g. D4">-->
+        <select type="text" id="node-input-pin" style="width:70%;">
+        <option value="D0">D0</option>
+        <option value="D1">D1</option>
+        <option value="D2">D2</option>
+        <option value="D3">D3</option>
+        <option value="D4">D4</option>
+        <option value="D5">D5</option>
+        <option value="D6">D6</option>
+        <option value="D7">D7</option>
+        <option value="D10">D10</option>
+        <option value="D11">D11</option>
+        <option value="D12">D12</option>
+        </select>
+    </div>
+    <div class="form-tips">
+    	XBee addresses are specified as 16 or 64 bit Hex strings, e.g. 0a12 or 0013a200408b9437, or node identifier string.
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="xbee-digital-in">
+	<p>Provides an connection to an XBEE network through an XBee module connected to this computer&apos;s serial port. </p>
+	<p>XBee addresses are specified as base64 Hex strings, e.g. 0013a200408b9437. </p>
+
+</script>
+<script type="text/javascript">
+    RED.nodes.registerType('xbee-digital-in',{
+        category: 'input',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""},
+            addressMethod:{value:"", required:true},
+            address: {value:"", required:true},
+            pin: {value:"", required:true},
+            serial: {type:"xbee-port",required:true}
+        },
+        inputs:0,
+        outputs:1,
+        icon: "bridge.png",
+        label: function() {
+            var serialNode = RED.nodes.node(this.serial);
+            return this.name||(this.address?"XBee "+this.address:(serialNode?serialNode.label():"serial"));
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
+
+<!-- XBEE Configuration -->
+<script type="text/x-red" data-template-name="xbee-port">
+    <div class="form-row">
+        <label for="node-config-input-serialport"><i class="fa fa-random"></i> <span data-i18n="serial.label.serialport"></span></label>
+        <input type="text" id="node-config-input-serialport" style="width:60%;" data-i18n="[placeholder]serial.placeholder.serialport">
+        <a id="node-config-lookup-serial" class="btn"><i id="node-config-lookup-serial-icon" class="fa fa-search"></i></a>
+    </div>
+    <div class="form-row">
+        <table width="100%"><tr>
+            <td width="100px"><i class="fa fa-wrench"></i> <span data-i18n="serial.label.settings"></span></td>
+            <td width="110px" data-i18n="serial.label.baudrate"></td>
+            <td width="70px" data-i18n="serial.label.databits"></td>
+            <td width="80px" data-i18n="serial.label.parity"></td>
+            <td width="70px" data-i18n="serial.label.stopbits"></td>
+        </tr><tr><td>&nbsp;</td>
+        <td>
+            <input type="text" id="node-config-input-serialbaud" style="width:100px">
+        </td><td>
+        <select type="text" id="node-config-input-databits" style="width:70px;">
+            <option value="8">8</option>
+            <option value="7">7</option>
+            <option value="6">6</option>
+            <option value="5">5</option>
+        </select>
+        </td><td>
+        <select type="text" id="node-config-input-parity" style="width:80px;">
+            <option value="none" data-i18n="serial.parity.none"></option>
+            <option value="even" data-i18n="serial.parity.even"></option>
+            <option value="mark" data-i18n="serial.parity.mark"></option>
+            <option value="odd" data-i18n="serial.parity.odd"></option>
+            <option value="space" data-i18n="serial.parity.space"></option>
+        </select>
+        </td><td>
+        <select type="text" id="node-config-input-stopbits" style="width:70px;">
+            <option value="2">2</option>
+            <option value="1">1</option>
+        </select>
+    </td>
+    </tr></table></div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('xbee-port',{
+        category: 'config',
+        defaults: {
+            //name: {value:""},
+            serialport: {value:"",required:true},
+            serialbaud: {value:"57600",required:true,validate:RED.validators.number()},
+            databits: {value:8,required:true},
+            parity: {value:"none",required:true},
+            stopbits: {value:1,required:true}
+
+        },
+        label: function() {
+            this.serialbaud = this.serialbaud || 57600;
+            this.databits = this.databits || 8;
+            this.parity = this.parity || this._("serial.label.none");
+            this.stopbits = this.stopbits || 1;
+            return this.serialport+":"+this.serialbaud+"-"+this.databits+this.parity.charAt(0).toUpperCase()+this.stopbits;
+        },
+        oneditprepare: function() {
+            var previous = null;
+            var blist = [
+                {value:"115200",label:"115200",hasValue:false},
+                {value:"57600",label:"57600",hasValue:false},
+                {value:"38400",label:"38400",hasValue:false},
+                {value:"19200",label:"19200",hasValue:false},
+                {value:"9600",label:"9600",hasValue:false},
+                {value:"4800",label:"4800",hasValue:false},
+                {value:"2400",label:"2400",hasValue:false},
+                {value:"1200",label:"1200",hasValue:false},
+                {value:"600",label:"600",hasValue:false},
+                {value:"300",label:"300",hasValue:false},
+                {label:"other",value:"other",icon:"red/images/typedInput/09.png",validate:/^[0-9]*$/}
+            ];
+
+            var serialbaudType = "custom";
+            for (var i in blist) {
+                if (this.serialbaud == blist[i].value) {
+                    serialbaudType = this.serialbaud;
+                }
+            }
+
+            $("#node-config-input-serialbaud").typedInput({
+                default: this.serialbaud,
+                types:blist
+            });
+
+            try {
+                $("#node-config-input-serialport").autocomplete( "destroy" );
+            } catch(err) {
+            }
+            $("#node-config-lookup-serial").click(function() {
+                $("#node-config-lookup-serial").addClass('disabled');
+                $.getJSON('serialports',function(data) {
+                    $("#node-config-lookup-serial").removeClass('disabled');
+                    var ports = [];
+                    $.each(data, function(i, port) {
+                        ports.push(port.comName);
+                    });
+                    $("#node-config-input-serialport").autocomplete({
+                        source:ports,
+                        minLength:0,
+                        close: function( event, ui ) {
+                            $("#node-config-input-serialport").autocomplete( "destroy" );
+                        }
+                    }).autocomplete("search","");
+                });
+            });
+        },
+        oneditsave: function() {
+            var mytype = $("#node-config-input-serialbaud").typedInput('type');
+            if (mytype !== "other") {
+                $("#node-config-input-serialbaud").typedInput('value',mytype);
+            }
+            this.serialbaud = $("#node-config-input-serialbaud").typedInput('value');
+        }
+    });
+</script>

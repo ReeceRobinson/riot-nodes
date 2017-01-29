@@ -1,0 +1,46 @@
+{
+    "serial": {
+        "label": {
+            "xbeeport": "XBee Port",
+            "serialport": "Serial Port",
+            "settings": "Settings",
+            "baudrate": "Baud Rate",
+            "databits": "Data Bits",
+            "parity": "Parity",
+            "stopbits": "Stop Bits",
+            "input": "Input",
+            "split": "Split input",
+            "deliver": "and deliver",
+            "output": "Output",
+            "serial": "serial",
+            "none": "none"
+        },
+        "placeholder": {
+            "serialport": "for example: /dev/ttyUSB0/"
+        },
+        "parity": {
+            "none": "None",
+            "even": "Even",
+            "mark": "Mark",
+            "odd": "Odd",
+            "space": "Space"
+        },
+        "onopen": "serial port __port__ opened at __baud__ baud __config__",
+        "response": "xbee port __port__ received response: __response__",
+        "errors": {
+            "missing-address-method-conf": "xbee __port__, invalid or missing address method config",
+            "missing-conf": "missing serial config",
+            "serial-port": "serial port",
+            "error": "serial port __port__ error: __error__",
+            "unexpected-close": "serial port __port__ closed unexpectedly",
+            "disconnected": "serial port __port__ disconnected",
+            "closed": "serial port __port__ closed",
+            "command": "xbee __port__ command error: __error__"
+        },
+        "command": {
+            "digitalout": "digital out __command__ -> __parameter__, address type: __addressmethod__, address: __address__",
+            "digitalin": "digital in <- __command__, address type: __addressmethod__, address: __address__",
+            "analogin": "analog in <- __command__, address type: __addressmethod__, address: __address__"
+        }
+    }
+}
