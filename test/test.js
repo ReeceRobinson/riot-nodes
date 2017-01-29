@@ -6,7 +6,8 @@ var xbee = xbeeRx({
         baudrate: 9600
     },
     module: "ZigBee",
-    api_mode: 2
+    api_mode: 2,
+    debug: false
 });
 function hexStringToBytes(str){
     var a = [];
@@ -15,47 +16,56 @@ function hexStringToBytes(str){
     }
     return a;
 }
-xbee.localCommand({
-    // ATMY
-    // get my 16 bit address
-    command: "MY"
-}).subscribe(function (response) {
-    // response will be an array of two bytes, e.g. [ 23, 167 ]
-    console.log("ATMY response:\n", response.toString('hex'));
+//xbee.localCommand({
+//    // ATMY
+//    // get my 16 bit address
+//    command: "MY"
+//}).subscribe(function (response) {
+//    // response will be an array of two bytes, e.g. [ 23, 167 ]
+//    console.log("ATMY response:\n", response.toString('hex'));
+//
+//}, function (e) {
+//    console.log("Command failed:\n", e);
+//});
+
+xbee.remoteCommand({
+    // ATD3
+    // get the status of digital pin 3
+    command: "D3",
+    // destination addresses can be in hexidecimal or byte arrays
+    destination16: [ 0xd2, 0x03 ]
+}).subscribe(function (resultBuffer) {
+    var resultAsInt,
+        resultAsString;
+
+    console.log("Command successful!");
+
+    if (resultBuffer) {
+        if (resultBuffer.length === 0) {
+            console.log("Result is empty");
+        }
+        resultAsString = resultBuffer.toString();
+        if (resultAsString && !/[^\x20-\x7E]+/.test(resultAsString)) {
+            console.log("Result as string:", resultAsString);
+        }
+
+        if (resultBuffer.length === 1) {
+            resultAsInt = resultBuffer.readInt8(0);
+        } else if (resultBuffer.length === 2) {
+            resultAsInt = resultBuffer.readInt16BE(0);
+        } else if (resultBuffer.length === 4) {
+            resultAsInt = resultBuffer.readInt32BE(0);
+        }
+        if (typeof(resultAsInt) === "number") {
+            console.log("Result as integer:", resultAsInt);
+        }
+    } else {
+        console.log("No result buffer");
+    }
 
 }, function (e) {
     console.log("Command failed:\n", e);
 });
-
-//xbee.remoteCommand({
-//    // ATD3
-//    // get the status of digital pin 2
-//    command: "D2",
-//    // destination addresses can be in hexidecimal or byte arrays
-//    destination16: [ 0xd2, 0x03 ]
-//}).subscribe(function (response) {
-//    // response will be a single value in an array, e.g. [ 1 ]
-//    console.log("ATD2 response from node:\n", response.toString('hex'));
-//
-//}, function (e) {
-//    console.log("Command failed:\n", e);
-//
-//});
-//
-//xbee.remoteCommand({
-//    // ATD3
-//    // get the status of digital pin 3
-//    command: "D3",
-//    // destination addresses can be in hexidecimal or byte arrays
-//    destination16: [ 0xd2, 0x03 ]
-//}).subscribe(function (response) {
-//    // response will be a single value in an array, e.g. [ 1 ]
-//    console.log("ATD3 response from node:\n", response.toString('hex'));
-//
-//}, function (e) {
-//    console.log("Command failed:\n", e);
-//
-//});
 
 //xbee.remoteCommand({
 //    // ATD1 4/5
@@ -76,10 +86,10 @@ xbee.localCommand({
 //    xbee.close();
 //});
 
-var subscription = xbee
-    .monitorIODataPackets()
-    .subscribe(function (ioSamplePacket) {
-        // do something with the packet
-        console.log("Analog sample from A2:", ioSamplePacket.analogSamples.AD2);
-        console.log("Button sample from D3:", ioSamplePacket.digitalSamples.DIO3);
-    });
+//var subscription = xbee
+//    .monitorIODataPackets()
+//    .subscribe(function (ioSamplePacket) {
+//        // do something with the packet
+//        console.log("Analog sample from A2:", ioSamplePacket.analogSamples.AD2);
+//        console.log("Button sample from D3:", ioSamplePacket.digitalSamples.DIO3);
+//    });

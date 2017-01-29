@@ -79,7 +79,7 @@ module.exports = function(RED) {
             node.log(util.format("Get XBee on %s:%s", this.serialConfig.serialport, this.serialConfig.serialbaud));
 
             node.xbee = xbeePool.get(this.serialConfig)
-            node.xbee.getLocalAddress();
+
             showStatus(node,StatusEnum.CONNECT);
 
             // Node functions
@@ -132,8 +132,6 @@ module.exports = function(RED) {
             node.log(util.format("Get XBee on %s:%s", this.serialConfig.serialport, this.serialConfig.serialbaud));
 
             node.xbee = xbeePool.get(this.serialConfig)
-            node.xbee.getLocalAddress();
-            //showStatus(node,StatusEnum.CONNECT);
 
             // Node functions
             showStatus(node,StatusEnum.CONNECT);
@@ -193,8 +191,6 @@ module.exports = function(RED) {
             node.log(util.format("Get XBee on %s:%s", this.serialConfig.serialport, this.serialConfig.serialbaud));
 
             node.xbee = xbeePool.get(this.serialConfig)
-            node.xbee.getLocalAddress();
-            //showStatus(node,StatusEnum.CONNECT);
 
             // Node functions
             showStatus(node,StatusEnum.CONNECT);
@@ -239,7 +235,6 @@ module.exports = function(RED) {
         var connections = {};
         return {
             get:function(serial, callback) {
-                console.log("xbeepool get: ",serial);
                 var id = serial.serialport;
                 if (!connections[id]) {
                     connections[id] = (function() {
@@ -313,7 +308,6 @@ module.exports = function(RED) {
                                     D11:"DIO11",
                                     D12:"DIO12"
                                 };
-                                console.log('Digital Input subscribed to:',dio_map[pin]);
                                 return this.xbee
                                     .monitorIODataPackets()
                                     // ignore any packets at program startup
@@ -361,7 +355,7 @@ module.exports = function(RED) {
                                     D2:"AD2",
                                     D3:"AD3"
                                 };
-                                console.log('Analog Input subscribed to:',ad_map[pin] || "AD0");
+                                RED.log.info(RED._("serial.command.analogin",{command:ad_map[pin],addressmethod:addressMethod,address:address}));
                                 return this.xbee
                                     .monitorIODataPackets()
                                     // ignore any packets at program startup
@@ -374,20 +368,6 @@ module.exports = function(RED) {
                                     })
                                     // ignore multiple values that arrive within one second
                                     .throttle(1000);
-                            },
-
-                            getLocalAddress: function() {
-                                this.xbee.localCommand({
-                                    // ATMY
-                                    // get my 16 bit address
-                                    command: "MY"
-                                }).subscribe(function (response) {
-                                    // response will be an array of two bytes, e.g. [ 23, 167 ]
-                                    RED.log.info(RED._("serial.response",{port:serial.serialport,response:response.toString('hex')}));
-                                }, function (err) {
-                                    RED.log.error(RED._("serial.errors.command",{port:serial.serialport,error:err.toString()}));
-
-                                });
                             }
                         };
                         var olderr = "";
@@ -402,10 +382,11 @@ module.exports = function(RED) {
                             });
                         };
                         setupXbee();
-                        console.log('xbeePool: setupXbee completed.');
+                        //console.log('xbeePool: setupXbee completed.');
                         return obj;
                     }());
                 }
+                //connections[id].xbee.discoverNodes();
                 return connections[id];
             },
             close: function(port,done) {
