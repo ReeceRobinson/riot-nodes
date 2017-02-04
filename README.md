@@ -10,5 +10,6 @@ This project provides the following nodes:
 * Digital IO Output - drive a digital pin high or low
 * Analog Input - configure an IO Sampling Rate for your XBee; this node will receive the value transmissions. 
 
+**Note:** Configure your XBee for **API mode 2**.
 
 (c) Reece Robinson 2017
