@@ -1,6 +1,6 @@
 {
   "name": "riot-xbee",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "https://github.com/ReeceRobinson/riot-nodes/blob/master/riot-xbee/README.md",
   "description": "An XBee communication node for node-red",
   "repository": {
