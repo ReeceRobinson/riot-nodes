@@ -1,0 +1,35 @@
+{
+  "server": {
+    "label": {
+      "to": "To",
+      "server": "Server",
+      "port": "Port",
+      "userid": "Userid",
+      "password": "Password",
+      "repeat": "Refresh",
+      "seconds": "seconds",
+      "folder": "Folder",
+      "protocol": "Protocol",
+      "useSSL": "Use SSL?"
+    },
+    "placeholder": {
+      "serialport": "for example: /dev/ttyUSB0/"
+    },
+    "onopen": "serial port __port__ opened at __baud__ baud __config__",
+    "response": "xbee port __port__ received response: __response__",
+    "errors": {
+      "nouserid": "No calendar userid set",
+      "nopassword": "No calendar password set",
+      "nocredentials": "No Calendar credentials found. See info panel.",
+      "nopayload": "No payload to send",
+      "fetchfail": "Failed to fetch folder: __folder__",
+      "messageerror": "Fetch message error: __error__",
+      "missing-conf": "Misconfiguration"
+    },
+    "command": {
+      "digitalout": "digital out __command__ -> __parameter__, address type: __addressmethod__, address: __address__",
+      "digitalin": "digital in <- __command__, address type: __addressmethod__, address: __address__",
+      "analogin": "analog in <- __command__, address type: __addressmethod__, address: __address__"
+    }
+  }
+}

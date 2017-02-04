@@ -1,0 +1,73 @@
+
+<script type="text/x-red" data-template-name="caldav-events">
+    <div class="form-row node-input-repeat">
+        <label for="node-input-repeat"><i class="fa fa-repeat"></i> <span data-i18n="server.label.repeat"></span></label>
+        <input type="text" id="node-input-repeat" style="width: 80px"> <span data-i18n="server.label.seconds">seconds</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-protocol"><i class="fa fa-envelope"></i> <span data-i18n="server.label.protocol"></span></label>
+        <select type="text" id="node-input-protocol">
+            <option value="http">HTTP</option>
+            <option value="https">HTTPS</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-globe"></i> <span data-i18n="server.label.server"></span></label>
+        <input type="text" id="node-input-server" placeholder="server name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-port"><i class="fa fa-random"></i> <span data-i18n="server.label.port"></span></label>
+        <input type="text" id="node-input-port" placeholder="5232">
+    </div>
+    <div class="form-row">
+        <label for="node-input-userid"><i class="fa fa-user"></i> <span data-i18n="server.label.userid"></span></label>
+        <input type="text" id="node-input-userid">
+    </div>
+    <div class="form-row">
+        <label for="node-input-password"><i class="fa fa-lock"></i> <span data-i18n="server.label.password"></span></label>
+        <input type="password" id="node-input-password">
+    </div>
+    <div class="form-row node-input-box">
+        <label for="node-input-box"><i class="fa fa-inbox"></i> <span data-i18n="server.label.folder"></span></label>
+        <input type="text" id="node-input-box" placeholder="caldav">
+    </div>
+    </br>
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="caldav-events">
+	<p>Provides a stream of calendar events using the CalDav protocol when connected to a calendar server.</p>
+
+</script>
+<script type="text/javascript">
+    RED.nodes.registerType('caldav-events',{
+        category: 'input',
+        color: '#F3B567',
+        defaults: {
+            name: {value:""},
+            protocol: {value:"",required:true},
+            server: {value:"",required:true},
+            port: {value:"5232",required:true},
+            box: {value:"caldav",required:true},
+            repeat: {value:"300"}
+        },
+        credentials: {
+            userid: {type:"text",required:true},
+            password: {type: "password"}
+        },
+        inputs:0,
+        outputs:1,
+        icon: "white-globe.png",
+        align: "left",
+        label: function() {
+            return this.name||"CalDav";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>

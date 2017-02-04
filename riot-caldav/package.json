@@ -1,0 +1,27 @@
+{
+  "name": "riot-caldav",
+  "version": "0.0.1",
+  "homepage": "https://github.com/ReeceRobinson/riot-nodes/blob/master/riot-caldav/README.md",
+  "description": "A CalDav integration node for node-red",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ReeceRobinson/riot-nodes"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "rrule-alt": "2.2.4",
+    "request": "2.79.0"
+  },
+  "devDependencies": {
+    "jasmine": "^2.4.1",
+    "mocha": "^2.4.5"
+  },
+  "keywords": [
+    "CalDav"
+  ],
+  "node-red": {
+    "nodes": {
+      "riot-caldav": "riot-caldav.js"
+    }
+  }
+}
