@@ -14,5 +14,6 @@ This project provides the following nodes:
 First, you will need to install the `riot-xbee` module (i.e.
 `npm install riot-xbee`).
 
+**Note:** Configure your XBee for **API mode 2**.
 
 (c) Reece Robinson 2017
