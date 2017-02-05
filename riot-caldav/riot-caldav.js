@@ -8,7 +8,7 @@ var RRule =  require('rrule-alt').RRule;
 
 var START_EVENT = 'BEGIN:VEVENT';
 var END_EVENT = 'END:VEVENT';
-var LOOK_AHEAD_HOURS = 48;
+var LOOK_AHEAD_HOURS = 24;
 let offset = new Date().getTimezoneOffset()/-60;
 var TZ_OFFSET = (offset >= 0)?'+'+offset+'00':'-'+offset+'00';
 
@@ -271,7 +271,7 @@ module.exports = function(RED) {
         showStatus(node,StatusEnum.CONNECT);
 
         node.on('close', function() {
-            this.caldav.subscription.dispose();
+            //this.caldav.subscription.dispose();
             disposable.dispose();
             showStatus(node,StatusEnum.DISCONNECT);
         });
@@ -293,10 +293,25 @@ module.exports = function(RED) {
         }
     });
 
+    function RiotCalDavProcessorNode(config) {
+        RED.nodes.createNode(this, config);
+        this.name = config.name;
+
+        var node = this;
+        // Node functions
+        node.on('input', function(msg) {
+
+            node.send(msg);
+        });
+
+    }
+
+    RED.nodes.registerType("caldav-processor",RiotCalDavProcessorNode);
+
     var caldavPool = (function() {
         var connections = {};
         return {
-            get:function(server, callback) {
+            get:function(server) {
                 var id = server.name;
                 if (!connections[id]) {
                     connections[id] = (function() {

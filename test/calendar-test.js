@@ -190,18 +190,105 @@ function filterRRules(event, a, b) {
     }
 }
 
+// Processor helper functions
+var rooms = {};
+
+function isUnique(room, entry) {
+    for(var i = 0; i < room.length; i++) {
+        if(room[i].type === entry.type && room[i].mode === entry.mode && room[i].time.getTime() === entry.time.getTime()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function optimiseEntries(room) {
+    var optimised = [];
+
+    for(var i = 0; i < room.length; i++) {
+        if(room[i].type === 'start') {
+
+            if(i === 0) { // This is the first entry so it is added by default.
+                optimised.push(room[i]);
+                continue;
+            } else if (room[i].type === room[i - 1].type && room[i].mode == room[i - 1].mode) {
+                // do nothing as this node isn't required
+            } else {
+                optimised.push(room[i])
+            }
+        } else { // This is an end item
+            if(i === (room.length - 1) ){
+                // No more items so add by default
+                optimised.push(room[i]);
+            } else {
+                if (room[i].type === room[i + 1].type) {
+                    // Nothing
+                } else {
+                    optimised.push(room[i])
+                }
+            }
+        }
+    }
+    return optimised;
+}
+
+function processor(event) {
+    var room = rooms[event.room]|| [];
+    if(!(room instanceof Array) ){
+        room = [];
+    }
+    var start = event.start;
+    var end = event.end;
+    var mode = event.command;
+
+    // Start of event window
+    var entry = {
+        type:'start',
+        time: start,
+        mode: mode
+    };
+
+    if( isUnique(room, entry) ) {
+        room.push( entry );
+    }
+
+    // end of event window
+    entry = {
+        type:'end',
+        time: end,
+        mode: mode
+    };
+
+    if( isUnique(room, entry)) {
+        room.push(entry);
+    }
+
+    if(rooms.undefined !== undefined) {
+        delete rooms.undefined;
+    }
+
+    room.sort(function(a,b){
+        return a.time - b.time;
+    });
+
+    room = optimiseEntries(room);
+
+    rooms[event.room] = room;
+}
+
+// Stream processing
 var requestProto = Rx.Observable.fromNodeCallback(request);
 
 var after = new Date();
-var before = new Date(new Date(after).setHours(after.getHours() + 48));
+var before = new Date(new Date(after).setHours(after.getHours() + 24));
 var disposable = Rx.Scheduler.default.schedulePeriodic(
     0,
-    100, /* 0.1 second */
+    5000, /* 0.1 second */
     function (i) {
         console.log(i);
 
         // After three times, dispose
-        if (++i > 0) { disposable.dispose(); }
+        if (++i > 2) { disposable.dispose(); }
         var requestStream = requestProto(options)
             .map(r => r[0].toJSON())
             .flatMap(parseCalDav)
@@ -212,13 +299,17 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
         requestStream.subscribe(
             function(data) {
                 console.log(data);
+                processor(data);
             },
             function(err) {
                 console.log(err);
             },
             function(){
                 console.log('completed');
+                console.log('Num Room Entries: ',rooms.living.length);
+                console.log(JSON.stringify(rooms));
             }
         );
         return i;
     });
+
