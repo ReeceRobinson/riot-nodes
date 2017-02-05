@@ -204,6 +204,145 @@ function filterRRules(event, a, b) {
     }
 }
 
+/**
+ * Test if the entry already exists in the collection.
+ * @param room
+ * @param entry
+ * @returns {boolean}
+ */
+function isUnique(room, entry) {
+    for(var i = 0; i < room.length; i++) {
+        if(room[i].type === entry.type && room[i].mode === entry.mode && room[i].time.getTime() === entry.time.getTime()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Remove adjacent start/end events that coinside.
+ * @param events
+ * @returns {*}
+ */
+function removeConflicts(events) {
+    if(events === undefined || events.length === 0) {
+        return events;
+    }
+    var optimized = [events[0]];
+    for( var i = 1; i < events.length; i++) {
+        if(events[i].type === 'end') {
+            if(events[i-1].time === events[i].time) {
+                // this is a redundant event
+            } else {
+                optimized.push(events[i]);
+            }
+        }
+    }
+    return optimized;
+}
+
+/**
+ * Resolve the overlaps in events by command.
+ * @param room
+ * @returns {Array}
+ */
+function optimiseEntries(room) {
+    var optimised = [];
+    var startArray = [];
+    var endArray = [];
+
+    for(var i = 0; i < room.length; i++) {
+
+        if(room[i].type === 'start') {
+            if(endArray.length > 0) { // Save the end item as we switch type
+                optimised.push(endArray[endArray.length - 1]);
+                endArray = [];
+            }
+            if(i === 0) {
+                // This is the first entry so it is added by default.
+                startArray.push(room[i]);
+            } else if (room[i].mode == room[i - 1].mode) {
+                // A redundant start
+                startArray.push(room[i]);
+            } else {
+                if(startArray.length > 0) {
+                    optimised.push(startArray[0]);
+                    startArray = [];
+                }
+                startArray.push(room[i]);
+            }
+        } else { // This is an end item
+            if(startArray.length > 0) {
+                optimised.push(startArray[0]);
+                startArray = [];
+            }
+            endArray.push(room[i]);
+        }
+    }
+    if(endArray.length > 0) {
+        optimised.push(endArray[endArray.length -1]);
+    }
+    // Finally remove end commands that have the same time as a start command.
+    removeConflicts(optimised);
+    return optimised;
+}
+
+/**
+ * Process a event for control purposes.
+ * @param rooms
+ * @param event
+ */
+function processor(rooms, event) {
+    var room = rooms[event.room]|| [];
+    if(!(room instanceof Array) ){
+        room = [];
+    }
+    var start = event.start;
+    var end = event.end;
+    var mode = event.command;
+    var roomname = event.room;
+
+    // Start of event window
+    var entry = {
+        type:'start',
+        time: start,
+        mode: mode,
+        room: roomname
+    };
+
+    if( isUnique(room, entry) ) {
+        room.push( entry );
+    }
+
+    // end of event window
+    entry = {
+        type:'end',
+        time: end,
+        mode: mode,
+        room: roomname
+    };
+
+    if( isUnique(room, entry)) {
+        room.push(entry);
+    }
+
+    if(rooms.undefined !== undefined) {
+        delete rooms.undefined;
+    }
+
+    room.sort(function(a,b){
+        return a.time - b.time;
+    });
+
+    room = optimiseEntries(room);
+
+    rooms[event.room] = room;
+}
+
+function hashEvent(event) {
+    return JSON.stringify(event);
+}
+
 module.exports = function(RED) {
 
     var request = require('request');
@@ -253,17 +392,22 @@ module.exports = function(RED) {
             function (i) {
                 i++;
                 var eventStream = node.caldav.listenCalendarEvents(node.serverConfig);
+                var resp = [];
                 node.caldav.subscription = eventStream
                     .subscribe(function (response) {
-                        var msg = {};
-                        msg.payload = response;
-                        node.send(msg);
+                        resp.push(response);
+                        //var msg = {};
+                        //msg.payload = response;
+                        //node.send(msg);
 
                     }, function (error) {
                         //console.log("Error during monitoring:\n", error);
                         showStatus(node,StatusEnum.DISCONNECT);
                     }, function () {
                         //console.log("Monitoring stream ended; exiting.");
+                        var msg = {};
+                        msg.payload = resp;
+                        node.send(msg);
                     });
                 return i;
             });
@@ -298,9 +442,29 @@ module.exports = function(RED) {
         this.name = config.name;
 
         var node = this;
+
         // Node functions
         node.on('input', function(msg) {
+            var rooms = {};
+            var events = msg.payload;
+            //console.log("events: ",events);
+            for( var i = 0; i < events.length; i++) {
+                //console.log("processing: ",events[i]);
+                processor(rooms, events[i]);
+            }
+            msg.payload = rooms;
+            node.context().flow.set('rooms',rooms);
 
+            // Create and maintain the active list
+            var activeEvents = node.context().global.get('activeEvents') || {};
+            var keys = Object.keys(rooms);
+            for(var i = 0; i < keys.length; i++){
+                var events = rooms[keys[i]];
+                for(var j = 0; j < events.length; j++) {
+                    activeEvents[hashEvent(events[j])] = events[j];
+                }
+            }
+            node.context().global.set('activeEvents',activeEvents);
             node.send(msg);
         });
 

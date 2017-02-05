@@ -194,6 +194,9 @@ function filterRRules(event, a, b) {
 var rooms = {};
 
 function isUnique(room, entry) {
+    if(entry === undefined) {
+        return;
+    }
     for(var i = 0; i < room.length; i++) {
         if(room[i].type === entry.type && room[i].mode === entry.mode && room[i].time.getTime() === entry.time.getTime()) {
             return false;
@@ -202,37 +205,68 @@ function isUnique(room, entry) {
     return true;
 }
 
-function optimiseEntries(room) {
-    var optimised = [];
-
-    for(var i = 0; i < room.length; i++) {
-        if(room[i].type === 'start') {
-
-            if(i === 0) { // This is the first entry so it is added by default.
-                optimised.push(room[i]);
-                continue;
-            } else if (room[i].type === room[i - 1].type && room[i].mode == room[i - 1].mode) {
-                // do nothing as this node isn't required
+function removeConflicts(events) {
+    if(events === undefined || events.length === 0) {
+        return events;
+    }
+    var optimized = [events[0]];
+    for( var i = 1; i < events.length; i++) {
+        if(events[i].type === 'end') {
+            if(events[i-1].time === events[i].time) {
+                // this is a redundant event
             } else {
-                optimised.push(room[i])
-            }
-        } else { // This is an end item
-            if(i === (room.length - 1) ){
-                // No more items so add by default
-                optimised.push(room[i]);
-            } else {
-                if (room[i].type === room[i + 1].type) {
-                    // Nothing
-                } else {
-                    optimised.push(room[i])
-                }
+                optimized.push(events[i]);
             }
         }
     }
+    return optimized;
+}
+
+function optimiseEntries(room) {
+    var optimised = [];
+    var startArray = [];
+    var endArray = [];
+
+    for(var i = 0; i < room.length; i++) {
+
+        if(room[i].type === 'start') {
+            if(endArray.length > 0) { // Save the end item as we switch type
+                optimised.push(endArray[endArray.length - 1]);
+                endArray = [];
+            }
+            if(i === 0) {
+                // This is the first entry so it is added by default.
+                startArray.push(room[i]);
+            } else if (room[i].mode == room[i - 1].mode) {
+                // A redundant start
+                startArray.push(room[i]);
+            } else {
+                if(startArray.length > 0) {
+                    optimised.push(startArray[0]);
+                    startArray = [];
+                }
+                startArray.push(room[i]);
+            }
+        } else { // This is an end item
+            if(startArray.length > 0) {
+                optimised.push(startArray[0]);
+                startArray = [];
+            }
+            endArray.push(room[i]);
+        }
+    }
+    if(endArray.length > 0) {
+        optimised.push(endArray[endArray.length -1]);
+    }
+    // Finally remove end commands that have the same time as a start command.
+    removeConflicts(optimised);
     return optimised;
 }
 
-function processor(event) {
+function processor(rooms, event) {
+    if(event === undefined) {
+        return;
+    }
     var room = rooms[event.room]|| [];
     if(!(room instanceof Array) ){
         room = [];
@@ -240,12 +274,14 @@ function processor(event) {
     var start = event.start;
     var end = event.end;
     var mode = event.command;
+    var roomname = event.room;
 
     // Start of event window
     var entry = {
         type:'start',
         time: start,
-        mode: mode
+        mode: mode,
+        room: roomname
     };
 
     if( isUnique(room, entry) ) {
@@ -256,7 +292,8 @@ function processor(event) {
     entry = {
         type:'end',
         time: end,
-        mode: mode
+        mode: mode,
+        room: roomname
     };
 
     if( isUnique(room, entry)) {
@@ -276,11 +313,18 @@ function processor(event) {
     rooms[event.room] = room;
 }
 
+function hashEvent(event) {
+    return JSON.stringify(event);
+}
+
 // Stream processing
 var requestProto = Rx.Observable.fromNodeCallback(request);
 
 var after = new Date();
 var before = new Date(new Date(after).setHours(after.getHours() + 24));
+
+var activeEvents = {};
+
 var disposable = Rx.Scheduler.default.schedulePeriodic(
     0,
     5000, /* 0.1 second */
@@ -289,6 +333,8 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
 
         // After three times, dispose
         if (++i > 2) { disposable.dispose(); }
+        var resp = [];
+
         var requestStream = requestProto(options)
             .map(r => r[0].toJSON())
             .flatMap(parseCalDav)
@@ -298,16 +344,33 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
 
         requestStream.subscribe(
             function(data) {
-                console.log(data);
-                processor(data);
+                resp.push(data);
+                //console.log(data);
+                //processor(data);
             },
             function(err) {
                 console.log(err);
             },
             function(){
                 console.log('completed');
-                console.log('Num Room Entries: ',rooms.living.length);
-                console.log(JSON.stringify(rooms));
+                var rooms = {};
+                console.log(resp);
+                for( var i = 0; i < resp.length; i++) {
+                    console.log('processing: ',resp[i]);
+                    processor(rooms, resp[i]);
+                }
+                console.log(rooms);
+
+                // Create and maintain the active list
+                var keys = Object.keys(rooms);
+                for(var i = 0; i < keys.length; i++){
+                    var events = rooms[keys[i]];
+                    for(var j = 0; j < events.length; j++) {
+                        activeEvents[hashEvent(events[j])] = events[j];
+                    }
+                }
+                console.log(activeEvents);
+
             }
         );
         return i;
