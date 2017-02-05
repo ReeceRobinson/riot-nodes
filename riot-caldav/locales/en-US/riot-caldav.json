@@ -27,9 +27,7 @@
       "missing-conf": "Misconfiguration"
     },
     "command": {
-      "digitalout": "digital out __command__ -> __parameter__, address type: __addressmethod__, address: __address__",
-      "digitalin": "digital in <- __command__, address type: __addressmethod__, address: __address__",
-      "analogin": "analog in <- __command__, address type: __addressmethod__, address: __address__"
+      "fetch":"requesting events from __serverhost__"
     }
   }
 }
