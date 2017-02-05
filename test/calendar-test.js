@@ -364,12 +364,35 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
                 // Create and maintain the active list
                 var keys = Object.keys(rooms);
                 for(var i = 0; i < keys.length; i++){
-                    var events = rooms[keys[i]];
-                    for(var j = 0; j < events.length; j++) {
-                        activeEvents[hashEvent(events[j])] = events[j];
+                    var roomKey = keys[i];
+                    // Get the candidate events for this room
+                    var candidateRoomEvents = rooms[roomKey];
+
+                    // If there are existing active events for this room then maintain them.
+                    if(activeEvents[roomKey] !== undefined) {
+                        // 1. What is the earliest candidate event for this room? It is a sorted list so it is the first element
+                        var cutoffTime = candidateRoomEvents[0].time;
+
+                        // 2. Find active events at or after the cutoff time.
+                        var cutoffIndex = -1; // Nothing to prune
+                        for (var k = 0; k < activeEvents[roomKey].length; k++) {
+                            if (activeEvents[roomKey][k].time >= cutoffTime) {
+                                cutoffIndex = k;
+                                break;
+                            }
+                        }
+
+                        // 3. Prune active events from the cutoff index
+                        if (cutoffIndex > -1) {
+                            activeEvents[roomKey] = activeEvents[roomKey].slice(0, cutoffIndex);
+                        }
+                    } else {
+                        activeEvents[roomKey] = [];
                     }
-                }
-                console.log(activeEvents);
+                    for(var j = 0; j < candidateRoomEvents.length; j++) {
+                        activeEvents[roomKey].push(candidateRoomEvents[j]);
+                    }
+                }                console.log(activeEvents);
 
             }
         );
