@@ -10,7 +10,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "rrule-alt": "2.2.4",
-    "request": "2.79.0"
+    "request": "2.79.0",
+    "rx": "4.1.0"
   },
   "devDependencies": {
     "jasmine": "^2.4.1",

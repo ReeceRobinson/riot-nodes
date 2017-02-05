@@ -31,11 +31,11 @@ function showStatus(node, state, msg){
 }
 
 module.exports = function(RED) {
-    var RRule = require('rrule-alt').RRule;
+
     var request = require('request');
     var util = require("util");
     var events = require("events");
-    var rx = require("rx");
+    var Rx = require("rx");
     var settings = RED.settings;
 
     function RiotCalDavEventsNode(config) {
@@ -80,7 +80,6 @@ module.exports = function(RED) {
             showStatus(node,StatusEnum.DISCONNECT);
         });
 
-
         this.on("close", function(done) {
             if (this.serverConfig) {
                 // something
@@ -91,11 +90,12 @@ module.exports = function(RED) {
         });
     }
 
+    //RED.nodes.registerType("caldav-events",RiotCalDavEventsNode);
     RED.nodes.registerType("caldav-events",RiotCalDavEventsNode,{
         credentials: {
-        userid: { type:"text" },
-        password: { type: "password" }
-    }
+            userid: {type: "text"},
+            password: {type: "password"}
+        }
     });
 
     var caldavPool = (function() {
@@ -172,5 +172,4 @@ module.exports = function(RED) {
             }
         }
     }());
-
 };

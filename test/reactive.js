@@ -12,9 +12,64 @@ var options = {
     method: 'GET',
     url: 'http://calendar.local:5232/reece/caldav'
 };
+
+/**
+ * Trim the given `str`.
+ *
+ * @api private
+ * @param {string} str
+ * @return {string}
+ */
+function trim(str) {
+    if(str === undefined) {
+        return;
+    }
+    return str.replace(/^\s+|\s+$/g, '');
+};
+
+/**
+ * Map an iCal event structure to a view model projection.
+ * @param event
+ * @returns {{id: number, title: string, room: string, command: string, start: *, end: *, updated: *, actionedStart: boolean, actionedEnd: boolean}}
+ */
+function mapEvent(event) {
+   return {
+        'id': event.uid,
+        'title': trim(event.summary),
+        'room': (event.location === undefined) ? "" : trim(event.location),
+        'command': (event.description === undefined) ? "" : trim(event.description),
+        'start': event.dtstart,
+        'end': event.dtend,
+        'updated': event.dtstamp
+    };
+}
+
+/**
+ * Convert an event to one or more view model events based on the rruleDates collection it may contain.
+ * @param event
+ * @returns {Array}
+ */
+function simpleEvents(event) {
+    var events = [];
+    // Check to see if there are multiple rruleDates and handle them.
+    if(event.rruleDates !== undefined && event.rruleDates.length > 0) {
+        for (var i = 0; i < event.rruleDates.length; i++) {
+            var duration = event.dtend - event.dtstart;
+            var simpleEvent = mapEvent(event);
+            simpleEvent.start = event.rruleDates[i];
+            simpleEvent.end = new Date(event.rruleDates[i].getTime()+duration);
+            events.push(simpleEvent);
+        }
+
+    } else {
+        events.push( mapEvent(event) );
+    }
+    return events;
+}
+
 /**
  * Parse the caldav document response.
- * @param body
+ * @param data
  * @returns {Array}
  */
 function parseCalDav(data) {
@@ -77,6 +132,14 @@ function parseDateTimeValues(events){
     return events;
 }
 
+/**
+ * Process the rrules for this event and add start dates to the rrules date collection if the
+ * start date is between the after and before parameter values.
+ * @param event
+ * @param a
+ * @param b
+ * @returns {*}
+ */
 function parseRRules(event, a, b){
     if(event.rrule !== undefined) {
         // This event has an associated rule.
@@ -88,21 +151,43 @@ function parseRRules(event, a, b){
     return event;
 }
 
+/**
+ * Filter an event based on the rrules dates if prescent or the start date of a non-repeating event.
+ * @param event
+ * @param a
+ * @param b
+ * @returns {*}
+ */
 function filterRRules(event, a, b) {
-    if (event.rruleDates !== undefined && event.rruleDates.length > 0) {
-        var source = Rx.Observable.from(event.rruleDates);
-        source.subscribe(
-            function(x) {
-                console.log(after);
-                console.log(before);
-                console.log(event.rule.options.byhour+':'+ event.rule.options.byminute);
-            },
-            function(err) {},
-            function() {}
-        );
-        return event;
+    if (event.rruleDates !== undefined) {
+        if (event.rruleDates.length > 0) {
+            // The fact that there are rruleDates means that the event is between the after and before dates.
+
+            //var source = Rx.Observable.from(event.rruleDates);
+            //source.subscribe(
+            //    function (x) {
+            //        console.log(after);
+            //        console.log(before);
+            //        console.log(event.rule.options.byhour + ':' + event.rule.options.byminute);
+            //    },
+            //    function (err) {
+            //    },
+            //    function () {
+            //    }
+            //);
+            return event;
+        } else {
+            // Given there is an empty rruleDates array means that this event should be filtered out.
+            return null;
+        }
+    } else {
+        // This is a non-repeating event so just check the start date
+        if(event.dtstart > a && event.dtstart < b) {
+            return event;
+        } else {
+            return null;
+        }
     }
-    return null;
 }
 
 var requestProto = Rx.Observable.fromNodeCallback(request);
@@ -121,7 +206,8 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
             .map(r => r[0].toJSON())
             .flatMap(parseCalDav)
             .map(event => parseRRules(event, after, before))
-            .filter(event => filterRRules(event, after, before) );
+            .filter(event => filterRRules(event, after, before) )
+            .flatMap(simpleEvents);
 
         requestStream.subscribe(
             function(data) {
