@@ -19,6 +19,12 @@ var StatusEnum = {
     NONE: ''
 };
 
+/**
+ * Show the node status in the UI
+ * @param node
+ * @param state
+ * @param msg
+ */
 function showStatus(node, state, msg){
     if(msg === undefined) {
         msg = "";
@@ -212,7 +218,7 @@ function filterRRules(event, a, b) {
  */
 function isUnique(room, entry) {
     for(var i = 0; i < room.length; i++) {
-        if(room[i].type === entry.type && room[i].mode === entry.mode && room[i].time.getTime() === entry.time.getTime()) {
+        if(room[i].type === entry.type && room[i].command === entry.command && room[i].time.getTime() === entry.time.getTime()) {
             return false;
         }
     }
@@ -261,7 +267,7 @@ function optimiseEntries(room) {
             if(i === 0) {
                 // This is the first entry so it is added by default.
                 startArray.push(room[i]);
-            } else if (room[i].mode == room[i - 1].mode) {
+            } else if (room[i].command == room[i - 1].command) {
                 // A redundant start
                 startArray.push(room[i]);
             } else {
@@ -297,16 +303,22 @@ function processor(rooms, event) {
     if(!(room instanceof Array) ){
         room = [];
     }
+
+    // Ensure we have a valid event before processing
+    if(event === undefined || event.start === undefined || event.end === undefined || event.command === undefined || event.room === undefined) {
+        return;
+    }
+
     var start = event.start;
     var end = event.end;
-    var mode = event.command;
-    var roomname = event.room;
+    var command = event.command.toLowerCase();
+    var roomname = event.room.toLowerCase();
 
     // Start of event window
     var entry = {
         type:'start',
         time: start,
-        mode: mode,
+        command: command,
         room: roomname
     };
 
@@ -318,7 +330,7 @@ function processor(rooms, event) {
     entry = {
         type:'end',
         time: end,
-        mode: mode,
+        command: command,
         room: roomname
     };
 
@@ -337,10 +349,6 @@ function processor(rooms, event) {
     room = optimiseEntries(room);
 
     rooms[event.room] = room;
-}
-
-function hashEvent(event) {
-    return JSON.stringify(event);
 }
 
 module.exports = function(RED) {
@@ -364,11 +372,12 @@ module.exports = function(RED) {
         } else {
                 this.error(RED._("server.errors.nouserid"));
         }
-        if (this.credentials && this.credentials.hasOwnProperty("password")) {
-            this.password = this.credentials.password;
-        } else {
-            this.warn(RED._("server.errors.nopassword"));
-        }
+        // TODO: Support server login
+        //if (this.credentials && this.credentials.hasOwnProperty("password")) {
+        //    this.password = this.credentials.password;
+        //} else {
+        //    this.warn(RED._("server.errors.nopassword"));
+        //}
 
         var node = this;
         // Store configuration values here
