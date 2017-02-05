@@ -52,7 +52,7 @@ function trim(str) {
         return;
     }
     return str.replace(/^\s+|\s+$/g, '');
-};
+}
 
 /**
  * Map an iCal event structure to a view model projection.
@@ -241,9 +241,9 @@ module.exports = function(RED) {
             box:this.box
         };
 
-        node.caldav = caldavPool.get(this.serverConfig)
+        node.caldav = caldavPool.get(this.serverConfig);
         // Provide any relevant status info
-        showStatus(node, StatusEnum.DISCONNECT)
+        showStatus(node, StatusEnum.DISCONNECT);
 
         node.log(util.format("Calendar Server on %s:%s", node.serverConfig.name, node.serverConfig.port));
 
