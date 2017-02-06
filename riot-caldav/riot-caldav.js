@@ -548,8 +548,14 @@ module.exports = function(RED) {
 
             // Store the current active events
             node.context().global.set('activeEvents',activeEvents);
-            msg.payload = eventsToFire;
-            node.send(msg);
+            var msgs = [];
+            for(i = 0; i < eventsToFire.length; i++) {
+                msg.payload = eventsToFire[i];
+                msg.topic = eventsToFire[i];
+                msgs.push(msg)
+            }
+
+            node.send(msgs);
         });
 
     }
