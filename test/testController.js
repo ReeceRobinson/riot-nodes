@@ -405,88 +405,88 @@ expect(activeEvents['living']).to.have.length(2);
 
 // *****
 // RESET for next test
-activeEvents = {};
-activeEvents['bedroom'] = [
-    {
-        type    : "start",
-        time    : new Date("2017-02-06T07:00:00.000Z"),
-        command : "cool",
-        room    : "bedroom",
-        subject : "aircon"
-    },
-    {
-        type    : "end",
-        time    : new Date("2017-02-06T07:30:00.000Z"),
-        command : "cool",
-        room    : "bedroom",
-        subject : "aircon"
-    }
-];
-activeEvents['living'] = [
-    {
-        type    : "start",
-        time    : new Date("2017-02-06T19:00:00.000Z"),
-        command : "cool",
-        room    : "living",
-        subject : "aircon"
-    },
-    {
-        type    : "end",
-        time    : new Date("2017-02-06T19:30:00.000Z"),
-        command : "cool",
-        room    : "living",
-        subject : "aircon"
-    }
-];
-
-rooms = {};
-rooms['bedroom'] = [
-    {
-        type    : "start",
-        time    : new Date("2017-02-06T08:00:00.000Z"),
-        command : "cool",
-        room    : "bedroom",
-        subject : "aircon"
-    },
-    {
-        type    : "end",
-        time    : new Date("2017-02-06T08:30:00.000Z"),
-        command : "cool",
-        room    : "bedroom",
-        subject : "aircon"
-    }
-];
-rooms['living'] = [
-    {
-        type    : "start",
-        time    : new Date("2017-02-06T20:00:00.000Z"),
-        command : "cool",
-        room    : "living",
-        subject : "aircon"
-    },
-    {
-        type    : "end",
-        time    : new Date("2017-02-06T20:30:00.000Z"),
-        command : "cool",
-        room    : "living",
-        subject : "aircon"
-    }
-];
-
-// Sanity Checks
-expect(activeEvents).not.to.be.null;
-expect(activeEvents['bedroom']).to.not.be.empty;
-expect(activeEvents['living']).to.not.be.empty;
-expect(activeEvents['bedroom']).to.have.length(2);
-expect(activeEvents['living']).to.have.length(2);
-
-// Test Time passing *******
-var eventsToFire;
-
-// Time now equal to start of event
-eventsToFire = calculateActive(activeEvents,rooms, new Date("2017-02-06T08:00:00.000Z"));
-expect(eventsToFire).not.to.be.null;
-expect(eventsToFire).to.have.length(1);
-expect(eventsToFire).to.contain('aircon/command/bedroom/coolstart');
-expect(activeEvents['bedroom']).to.have.length(1);
-expect(activeEvents['living']).to.have.length(2);
+//activeEvents = {};
+//activeEvents['bedroom'] = [
+//    {
+//        type    : "start",
+//        time    : new Date("2017-02-06T07:00:00.000Z"),
+//        command : "cool",
+//        room    : "bedroom",
+//        subject : "aircon"
+//    },
+//    {
+//        type    : "end",
+//        time    : new Date("2017-02-06T07:30:00.000Z"),
+//        command : "cool",
+//        room    : "bedroom",
+//        subject : "aircon"
+//    }
+//];
+//activeEvents['living'] = [
+//    {
+//        type    : "start",
+//        time    : new Date("2017-02-06T19:00:00.000Z"),
+//        command : "cool",
+//        room    : "living",
+//        subject : "aircon"
+//    },
+//    {
+//        type    : "end",
+//        time    : new Date("2017-02-06T19:30:00.000Z"),
+//        command : "cool",
+//        room    : "living",
+//        subject : "aircon"
+//    }
+//];
+//
+//rooms = {};
+//rooms['bedroom'] = [
+//    {
+//        type    : "start",
+//        time    : new Date("2017-02-06T08:00:00.000Z"),
+//        command : "cool",
+//        room    : "bedroom",
+//        subject : "aircon"
+//    },
+//    {
+//        type    : "end",
+//        time    : new Date("2017-02-06T08:30:00.000Z"),
+//        command : "cool",
+//        room    : "bedroom",
+//        subject : "aircon"
+//    }
+//];
+//rooms['living'] = [
+//    {
+//        type    : "start",
+//        time    : new Date("2017-02-06T20:00:00.000Z"),
+//        command : "cool",
+//        room    : "living",
+//        subject : "aircon"
+//    },
+//    {
+//        type    : "end",
+//        time    : new Date("2017-02-06T20:30:00.000Z"),
+//        command : "cool",
+//        room    : "living",
+//        subject : "aircon"
+//    }
+//];
+//
+//// Sanity Checks
+//expect(activeEvents).not.to.be.null;
+//expect(activeEvents['bedroom']).to.not.be.empty;
+//expect(activeEvents['living']).to.not.be.empty;
+//expect(activeEvents['bedroom']).to.have.length(2);
+//expect(activeEvents['living']).to.have.length(2);
+//
+//// Test Time passing *******
+//var eventsToFire;
+//
+//// Time now equal to start of event
+//eventsToFire = calculateActive(activeEvents,rooms, new Date("2017-02-06T08:00:00.000Z"));
+//expect(eventsToFire).not.to.be.null;
+//expect(eventsToFire).to.have.length(1);
+//expect(eventsToFire).to.contain('aircon/command/bedroom/coolstart');
+//expect(activeEvents['bedroom']).to.have.length(1);
+//expect(activeEvents['living']).to.have.length(2);
