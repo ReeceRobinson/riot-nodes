@@ -407,7 +407,7 @@ function calculateActive(activeEvents,rooms, now) {
                 var event = activeEvents[roomKey][k];
                 if (event.time <= now) {
                     // build command to emmit for firing
-                    console.log("Expired Event: ",event);
+                    //console.log("Expired Event: ",event);
                     //eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
                     pruneIndex = k + 1;
                 }
@@ -416,14 +416,14 @@ function calculateActive(activeEvents,rooms, now) {
                 // Prune fired events
                 var event = activeEvents[roomKey][pruneIndex-1];
                 eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
-                console.log("Pruning fired events: ", activeEvents[roomKey].slice(0, pruneIndex));
+                //console.log("Pruning fired events: ", activeEvents[roomKey].slice(0, pruneIndex));
                 activeEvents[roomKey] = activeEvents[roomKey].slice(pruneIndex);
             }
         }
     }
 
-    console.log("ACTIVE EVENTS: ",activeEvents);
-    console.log("FIRE EVENTS: ",eventsToFire);
+    //console.log("ACTIVE EVENTS: ",activeEvents);
+    //console.log("FIRE EVENTS: ",eventsToFire);
     return eventsToFire;
 }
 

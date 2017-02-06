@@ -2,7 +2,7 @@
   "name": "riot-caldav",
   "version": "0.0.1",
   "homepage": "https://github.com/ReeceRobinson/riot-nodes/blob/master/riot-caldav/README.md",
-  "description": "A CalDav integration node for node-red",
+  "description": "A CalDav integration and Event Processing node for node-red",
   "repository": {
     "type": "git",
     "url": "https://github.com/ReeceRobinson/riot-nodes"
