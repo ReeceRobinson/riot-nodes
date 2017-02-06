@@ -26,5 +26,8 @@
     "nodes": {
       "riot-xbee": "riot-xbee.js"
     }
+  },
+  "scripts": {
+    "test": "mocha"
   }
 }

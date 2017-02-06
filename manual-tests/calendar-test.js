@@ -313,10 +313,65 @@ function processor(rooms, event) {
     rooms[event.room] = room;
 }
 
-function hashEvent(event) {
-    return JSON.stringify(event);
-}
+/**
+ * Calculate the events that are due to be fired. Prune fired events from activeEvents.
+ * @param activeEvents
+ * @param rooms
+ * @returns {*}
+ */
+function calculateActive(activeEvents,rooms) {
+    // Create and maintain the active list
+    var keys = Object.keys(rooms);
+    for(var i = 0; i < keys.length; i++){
+        var roomKey = keys[i];
+        // Get the candidate events for this room
+        var candidateRoomEvents = rooms[roomKey];
 
+        // If there are existing active events for this room then maintain them.
+        if(activeEvents[roomKey] !== undefined) {
+            // 1. What is the earliest candidate event for this room? It is a sorted list so it is the first element
+            var cutoffTime = candidateRoomEvents[0].time;
+
+            // 2. Find active events at or after the cutoff time.
+            var cutoffIndex = -1; // Nothing to prune
+            for (var k = 0; k < activeEvents[roomKey].length; k++) {
+                if (activeEvents[roomKey][k].time >= cutoffTime) {
+                    cutoffIndex = k;
+                    break;
+                }
+            }
+
+            // 3. Prune active events from the cutoff index
+            if (cutoffIndex > -1) {
+                activeEvents[roomKey] = activeEvents[roomKey].slice(0, cutoffIndex);
+            }
+        } else {
+            activeEvents[roomKey] = [];
+        }
+        for(var j = 0; j < candidateRoomEvents.length; j++) {
+            activeEvents[roomKey].push(candidateRoomEvents[j]);
+        }
+        // Fire any events that are due and remove them if fired
+        var now = new Date();
+        var eventsToFire = [];
+        var pruneIndex = -1;
+        for (var k = 0; k < activeEvents[roomKey].length; k++){
+            var event = activeEvents[roomKey][k];
+            if(event.time <= now) {
+                // build command to emmit for firing
+                eventsToFire.push(event.subject+"/command/"+event.room+"/"+event.command);
+                pruneIndex = k+1;
+            }
+        }
+        if(pruneIndex > -1) {
+            // Prune fired events
+            console.log("Pruning fired events: ",activeEvents[roomKey].slice(0,pruneIndex));
+            activeEvents[roomKey] = activeEvents[roomKey].slice(pruneIndex);
+        }
+    }
+    console.log("ACTIVE EVENTS: ",activeEvents);
+    return eventsToFire;
+}
 // Stream processing
 var requestProto = Rx.Observable.fromNodeCallback(request);
 
@@ -359,41 +414,10 @@ var disposable = Rx.Scheduler.default.schedulePeriodic(
                     console.log('processing: ',resp[i]);
                     processor(rooms, resp[i]);
                 }
-                console.log(rooms);
+                console.log("ROOMS: ",rooms);
 
-                // Create and maintain the active list
-                var keys = Object.keys(rooms);
-                for(var i = 0; i < keys.length; i++){
-                    var roomKey = keys[i];
-                    // Get the candidate events for this room
-                    var candidateRoomEvents = rooms[roomKey];
-
-                    // If there are existing active events for this room then maintain them.
-                    if(activeEvents[roomKey] !== undefined) {
-                        // 1. What is the earliest candidate event for this room? It is a sorted list so it is the first element
-                        var cutoffTime = candidateRoomEvents[0].time;
-
-                        // 2. Find active events at or after the cutoff time.
-                        var cutoffIndex = -1; // Nothing to prune
-                        for (var k = 0; k < activeEvents[roomKey].length; k++) {
-                            if (activeEvents[roomKey][k].time >= cutoffTime) {
-                                cutoffIndex = k;
-                                break;
-                            }
-                        }
-
-                        // 3. Prune active events from the cutoff index
-                        if (cutoffIndex > -1) {
-                            activeEvents[roomKey] = activeEvents[roomKey].slice(0, cutoffIndex);
-                        }
-                    } else {
-                        activeEvents[roomKey] = [];
-                    }
-                    for(var j = 0; j < candidateRoomEvents.length; j++) {
-                        activeEvents[roomKey].push(candidateRoomEvents[j]);
-                    }
-                }                console.log(activeEvents);
-
+                var eventsToFire = calculateActive(activeEvents,rooms);
+                console.log("FIRE: ",eventsToFire);
             }
         );
         return i;

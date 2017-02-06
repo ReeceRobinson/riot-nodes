@@ -218,7 +218,7 @@ function filterRRules(event, a, b) {
  */
 function isUnique(room, entry) {
     for(var i = 0; i < room.length; i++) {
-        if(room[i].type === entry.type && room[i].command === entry.command && room[i].time.getTime() === entry.time.getTime()) {
+        if(room[i].type === entry.type && room[i].command === entry.command && room[i].time.getTime() === entry.time.getTime() && room[i].subject === entry.subject) {
             return false;
         }
     }
@@ -305,7 +305,7 @@ function processor(rooms, event) {
     }
 
     // Ensure we have a valid event before processing
-    if(event === undefined || event.start === undefined || event.end === undefined || event.command === undefined || event.room === undefined) {
+    if(event === undefined || event.start === undefined || event.end === undefined || event.command === undefined || event.room === undefined || event.title == undefined) {
         return;
     }
 
@@ -313,13 +313,15 @@ function processor(rooms, event) {
     var end = event.end;
     var command = event.command.toLowerCase();
     var roomname = event.room.toLowerCase();
+    var subject = event.title.toLowerCase();
 
     // Start of event window
     var entry = {
         type:'start',
         time: start,
         command: command,
-        room: roomname
+        room: roomname,
+        subject: subject
     };
 
     if( isUnique(room, entry) ) {
@@ -331,7 +333,8 @@ function processor(rooms, event) {
         type:'end',
         time: end,
         command: command,
-        room: roomname
+        room: roomname,
+        subject: subject
     };
 
     if( isUnique(room, entry)) {
@@ -351,13 +354,86 @@ function processor(rooms, event) {
     rooms[event.room] = room;
 }
 
+/**
+ * Calculate the events that are due to be fired. Prune fired events from activeEvents.
+ * @param activeEvents
+ * @param rooms
+ * @returns {*}
+ */
+function calculateActive(activeEvents,rooms, now) {
+    // Create and maintain the active list
+    var roomKeys = Object.keys(rooms);
+
+    for(var i = 0; i < roomKeys.length; i++){
+        var roomKey = roomKeys[i];
+        // Get the candidate events for this room
+        var candidateRoomEvents = rooms[roomKey];
+
+        // If there are existing active events for this room then maintain them.
+        if(activeEvents[roomKey] !== undefined) {
+            // 1. What is the earliest candidate event for this room? It is a sorted list so it is the first element
+            var cutoffTime = candidateRoomEvents[0].time;
+
+            // 2. Find active events at or after the cutoff time.
+            var cutoffIndex = -1; // Nothing to prune
+            for (var k = 0; k < activeEvents[roomKey].length; k++) {
+                if (activeEvents[roomKey][k].time >= cutoffTime) {
+                    cutoffIndex = k;
+                    break;
+                }
+            }
+
+            // 3. Prune active events from the cutoff index
+            if (cutoffIndex > -1) {
+                activeEvents[roomKey] = activeEvents[roomKey].slice(0, cutoffIndex);
+            }
+        } else {
+            activeEvents[roomKey] = [];
+        }
+        for(var j = 0; j < candidateRoomEvents.length; j++) {
+            activeEvents[roomKey].push(candidateRoomEvents[j]);
+        }
+    }
+
+    var activeKeys = Object.keys(activeEvents);
+    var eventsToFire = [];
+
+    for (var i = 0; i < activeKeys.length; i++) {
+        var roomKey = activeKeys[i];
+        // Fire any events that are due and remove them if fired
+        var pruneIndex = -1;
+        if(activeEvents[roomKey] !== undefined) {
+            for (var k = 0; k < activeEvents[roomKey].length; k++) {
+                var event = activeEvents[roomKey][k];
+                if (event.time <= now) {
+                    // build command to emmit for firing
+                    console.log("Expired Event: ",event);
+                    //eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
+                    pruneIndex = k + 1;
+                }
+            }
+            if (pruneIndex > -1) {
+                // Prune fired events
+                var event = activeEvents[roomKey][pruneIndex-1];
+                eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
+                console.log("Pruning fired events: ", activeEvents[roomKey].slice(0, pruneIndex));
+                activeEvents[roomKey] = activeEvents[roomKey].slice(pruneIndex);
+            }
+        }
+    }
+
+    console.log("ACTIVE EVENTS: ",activeEvents);
+    console.log("FIRE EVENTS: ",eventsToFire);
+    return eventsToFire;
+}
+
 module.exports = function(RED) {
 
     var request = require('request');
     var util = require("util");
     var events = require("events");
     var Rx = require("rx");
-    var settings = RED.settings;
+    //var settings = RED.settings;
 
     function RiotCalDavEventsNode(config) {
         RED.nodes.createNode(this,config);
@@ -461,46 +537,18 @@ module.exports = function(RED) {
                 //console.log("processing: ",events[i]);
                 processor(rooms, events[i]);
             }
-            msg.payload = rooms;
+
             node.context().flow.set('rooms',rooms);
 
             // Create and maintain the active list
 
             var activeEvents = node.context().global.get('activeEvents') || {};
 
-            // Get the room names for the latest candidate events
-            var keys = Object.keys(rooms);
-            for(var i = 0; i < keys.length; i++){
-                var roomKey = keys[i];
-                // Get the candidate events for this room
-                var candidateRoomEvents = rooms[roomKey];
+            eventsToFire = calculateActive(activeEvents,rooms, new Date());
 
-                // If there are existing active events for this room then maintain them.
-                if(activeEvents[roomKey] !== undefined) {
-                    // 1. What is the earliest candidate event for this room? It is a sorted list so it is the first element
-                    var cutoffTime = candidateRoomEvents[0].time;
-
-                    // 2. Find active events at or after the cutoff time.
-                    var cutoffIndex = -1; // Nothing to prune
-                    for (var k = 0; k < activeEvents[roomKey].length; k++) {
-                        if (activeEvents[roomKey][k].time >= cutoffTime) {
-                            cutoffIndex = k;
-                            break;
-                        }
-                    }
-
-                    // 3. Prune active events from the cutoff index
-                    if (cutoffIndex > -1) {
-                        activeEvents[roomKey] = activeEvents[roomKey].slice(0, cutoffIndex);
-                    }
-                } else {
-                    activeEvents[roomKey] = [];
-                }
-                for(var j = 0; j < candidateRoomEvents.length; j++) {
-                    activeEvents[roomKey].push(candidateRoomEvents[j]);
-                }
-            }
+            // Store the current active events
             node.context().global.set('activeEvents',activeEvents);
+            msg.payload = eventsToFire;
             node.send(msg);
         });
 
