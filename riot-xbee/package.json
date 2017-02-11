@@ -9,7 +9,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "xbee-rx": "2.1.0"
+    "xbee-rx": "2.1.0",
+    "rx": "4.1.0"
   },
   "devDependencies": {
     "moment": "^2.10",
