@@ -1,6 +1,7 @@
 /**
  * (c) Reece Robinson 27/01/17.
  */
+"use strict";
 
 var Rx = require("rx");
 var request = require('request');
