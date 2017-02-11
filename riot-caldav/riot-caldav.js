@@ -55,7 +55,7 @@ function showStatus(node, state, msg){
  */
 function trim(str) {
     if(str === undefined) {
-        return;
+        return "";
     }
     return str.replace(/^\s+|\s+$/g, '');
 }
@@ -358,6 +358,7 @@ function processor(rooms, event) {
  * Calculate the events that are due to be fired. Prune fired events from activeEvents.
  * @param activeEvents
  * @param rooms
+ * @param now
  * @returns {*}
  */
 function calculateActive(activeEvents,rooms, now) {
@@ -406,24 +407,17 @@ function calculateActive(activeEvents,rooms, now) {
             for (var k = 0; k < activeEvents[roomKey].length; k++) {
                 var event = activeEvents[roomKey][k];
                 if (event.time <= now) {
-                    // build command to emmit for firing
-                    //console.log("Expired Event: ",event);
-                    //eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
                     pruneIndex = k + 1;
                 }
             }
             if (pruneIndex > -1) {
                 // Prune fired events
                 var event = activeEvents[roomKey][pruneIndex-1];
-                eventsToFire.push(event.subject + "/command/" + event.room + "/" + event.command + event.type);
-                //console.log("Pruning fired events: ", activeEvents[roomKey].slice(0, pruneIndex));
+                eventsToFire.push(event);
                 activeEvents[roomKey] = activeEvents[roomKey].slice(pruneIndex);
             }
         }
     }
-
-    //console.log("ACTIVE EVENTS: ",activeEvents);
-    //console.log("FIRE EVENTS: ",eventsToFire);
     return eventsToFire;
 }
 
@@ -481,10 +475,6 @@ module.exports = function(RED) {
                 node.caldav.subscription = eventStream
                     .subscribe(function (response) {
                         resp.push(response);
-                        //var msg = {};
-                        //msg.payload = response;
-                        //node.send(msg);
-
                     }, function (error) {
                         //console.log("Error during monitoring:\n", error);
                         showStatus(node,StatusEnum.DISCONNECT);
@@ -532,9 +522,7 @@ module.exports = function(RED) {
         node.on('input', function(msg) {
             var rooms = {};
             var events = msg.payload;
-            //console.log("events: ",events);
             for( var i = 0; i < events.length; i++) {
-                //console.log("processing: ",events[i]);
                 processor(rooms, events[i]);
             }
 
@@ -544,18 +532,18 @@ module.exports = function(RED) {
 
             var activeEvents = node.context().global.get('activeEvents') || {};
 
-            eventsToFire = calculateActive(activeEvents,rooms, new Date());
+            var eventsToFire = calculateActive(activeEvents,rooms, new Date());
 
             // Store the current active events
             node.context().global.set('activeEvents',activeEvents);
-            var msgs = [];
-            for(i = 0; i < eventsToFire.length; i++) {
-                msg.payload = eventsToFire[i];
-                msg.topic = eventsToFire[i];
-                msgs.push(msg)
-            }
 
-            node.send(msgs);
+            for(i = 0; i < eventsToFire.length; i++) {
+                var msgToSend = {};
+                var event = eventsToFire[i];
+                msgToSend.topic = event.subject + "/command/" + event.room + "/" + event.command + event.type;
+                msgToSend.payload = event;
+                node.send(msgToSend);
+            }
         });
 
     }
@@ -597,7 +585,6 @@ module.exports = function(RED) {
                             obj.caldav = {};
                         };
                         setupCalDav();
-                        //console.log('caldavPool: setupCalDav completed.');
                         return obj;
                     }());
                 }
