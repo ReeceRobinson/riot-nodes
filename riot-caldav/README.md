@@ -4,7 +4,7 @@
 This project provides the following node:
 
 * CalDav calendar integration - retrieve calendar events from using the caldav protocol.
-* CalDav Event Processor - processing of events that resolves event overlaps and emits 'commands' based on event content. 
+* CalDav Event Processor - processing of events that resolves event overlaps and emits 'commands' with event objects, based on calendar event content. 
 
 ## Usage
 
