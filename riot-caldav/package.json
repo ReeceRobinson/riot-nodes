@@ -1,6 +1,6 @@
 {
   "name": "riot-caldav",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "homepage": "https://github.com/ReeceRobinson/riot-nodes/blob/master/riot-caldav/README.md",
   "description": "CalDav integration and Event Processing nodes for node-red",
   "repository": {

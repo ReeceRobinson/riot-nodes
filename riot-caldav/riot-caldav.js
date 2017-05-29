@@ -11,6 +11,10 @@ var START_EVENT = 'BEGIN:VEVENT';
 var END_EVENT = 'END:VEVENT';
 var LOOK_AHEAD_HOURS = 24;
 let offset = new Date().getTimezoneOffset()/-60;
+if((''+offset).length < 2) {
+    offset = '0'+offset;
+}
+
 var TZ_OFFSET = (offset >= 0)?'+'+offset+'00':'-'+offset+'00';
 
 var StatusEnum = {
@@ -477,7 +481,7 @@ module.exports = function(RED) {
                     .subscribe(function (response) {
                         resp.push(response);
                     }, function (error) {
-                        //console.log("Error during monitoring:\n", error);
+                        console.log("Error during monitoring:\n", error);
                         showStatus(node,StatusEnum.DISCONNECT);
                     }, function () {
                         //console.log("Monitoring stream ended; exiting.");
